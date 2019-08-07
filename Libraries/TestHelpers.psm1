@@ -302,21 +302,13 @@ Function Copy-RemoteFiles($uploadTo, $downloadFrom, $downloadTo, $port, $files, 
 
 Function Wrap-CommandsToFile([string] $username,[string] $password,[string] $ip,[string] $command, [int] $port)
 {
-	if ( ( $lastLinuxCmd -eq $command) -and ($lastIP -eq $ip) -and ($lastPort -eq $port) `
-		-and ($lastUser -eq $username) -and ($TestPlatform -ne "HyperV"))
-	{
-		#Skip upload if current command is same as last command.
-	}
-	else
-	{
-		Set-Variable -Name lastLinuxCmd -Value $command -Scope Global
-		Set-Variable -Name lastIP -Value $ip -Scope Global
-		Set-Variable -Name lastPort -Value $port -Scope Global
-		Set-Variable -Name lastUser -Value $username -Scope Global
-		$command | out-file -encoding ASCII -filepath "$LogDir\runtest.sh"
-		Copy-RemoteFiles -upload -uploadTo $ip -username $username -port $port -password $password -files "$LogDir\runtest.sh"
-		Remove-Item "$LogDir\runtest.sh"
-	}
+	Set-Variable -Name lastLinuxCmd -Value $command -Scope Global
+	Set-Variable -Name lastIP -Value $ip -Scope Global
+	Set-Variable -Name lastPort -Value $port -Scope Global
+	Set-Variable -Name lastUser -Value $username -Scope Global
+	$command | out-file -encoding ASCII -filepath "$LogDir\runtest.sh"
+	Copy-RemoteFiles -upload -uploadTo $ip -username $username -port $port -password $password -files "$LogDir\runtest.sh"
+	Remove-Item "$LogDir\runtest.sh"
 }
 
 Function Run-LinuxCmd([string] $username,[string] $password,[string] $ip,[string] $command, [int] $port, [switch]$runAsSudo, [Boolean]$WriteHostOnly, [Boolean]$NoLogsPlease, [switch]$ignoreLinuxExitCode, [int]$runMaxAllowedTime = 300, [switch]$RunInBackGround, [int]$maxRetryCount = 20, [string] $MaskStrings)

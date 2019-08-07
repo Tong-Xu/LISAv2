@@ -44,7 +44,14 @@ function Check-Result {
         if ($isVmAlive -eq "True") {
             $tcpTestResult = (Test-NetConnection -ComputerName $VmIp -Port $VMPort).TcpTestSucceeded
             if ($tcpTestResult) {
-                $state = Run-LinuxCmd -ip $VmIp -port $VMPort -username $User -password $Password -command "cat state.txt" -ignoreLinuxExitCode:$true
+                try{
+                    $state = Run-LinuxCmd -ip $VmIp -port $VMPort -username $User -password $Password -command "cat state.txt" -ignoreLinuxExitCode:$true
+                } catch {
+                    $ErrorMessage = $_.Exception.Message
+                    if ($ErrorMessage -match "Error in upload") {
+                        Write-LogInfo "Current VM is inaccessible, please wait for a while"
+                    }
+                }
                 if (-not $state) {
                     if ($TestPlatform -eq "HyperV" -and (Get-VMIntegrationService $VMName -ComputerName $HvServer | `
                         Where-Object {$_.name -eq "Heartbeat"}).PrimaryStatusDescription `
@@ -69,6 +76,7 @@ function Check-Result {
                     }
                 }
             } else {
+                Write-LogInfo "Current VM is inaccessible, please wait for a while"
                 continue
             }
         } else {
