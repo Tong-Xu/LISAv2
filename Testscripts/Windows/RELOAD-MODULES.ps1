@@ -44,7 +44,7 @@ function Check-Result {
         if ($isVmAlive -eq "True") {
             $TestConnection = .\Tools\plink.exe -C -batch -pw $Password -P $VMPort $User@$VmIp "echo Connected"
             if ($TestConnection -eq "Connected") {
-                $state = Run-LinuxCmd -ip $VmIp -port $VMPort -username $User -password $Password -command "cat state.txt" -ignoreLinuxExitCode:$true
+                $state = .\Tools\plink.exe -C -batch -pw $Password -P $VMPort $User@$VmIp "cat state.txt"
                 if (-not $state) {
                     if ($TestPlatform -eq "HyperV" -and (Get-VMIntegrationService $VMName -ComputerName $HvServer | `
                         Where-Object {$_.name -eq "Heartbeat"}).PrimaryStatusDescription `
