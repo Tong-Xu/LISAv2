@@ -38,6 +38,7 @@ Update_Test_State()
 
 Install_KVM_Dependencies()
 {
+    GetDistro
     if [ $DISTRO_NAME == "sles" ] || [ $DISTRO_NAME == "sle_hpc" ]; then
         add_sles_network_utilities_repo
     fi
@@ -48,7 +49,12 @@ Install_KVM_Dependencies()
     fi
     update_repos
     install_package qemu-kvm
-    install_package bridge-utils
+    if [[ $DISTRO == "redhat_8" ]]; then
+        bridge_utils_rpm_url="http://rpmfind.net/linux/fedora/linux/releases/29/Everything/x86_64/os/Packages/b/bridge-utils-1.6-2.fc29.x86_64.rpm"
+        rpm -ivh $bridge_utils_rpm_url
+    else
+        install_package bridge-utils
+    fi
     lsmod | grep kvm_intel
     exit_status=$?
     if [ $exit_status -ne 0 ]; then
@@ -62,7 +68,21 @@ Install_KVM_Dependencies()
         echo "Install epel repository"
         install_epel
         echo "Install qemu-system-x86"
-        install_package qemu-system-x86
+        if [[ $DISTRO == "redhat_8" ]]; then
+            pack_list=(glib2-devel pixman-devel zlib-devel python2 make gcc git flex bison)
+            install_package ${pack_list[@]}
+            ln -s /usr/bin/python2 /sbin/python
+            HOMEDIR=$(pwd)
+            qemu_git_url="git://git.qemu-project.org/qemu.git"
+            qemu_folder="/mnt/resource/qemu"
+            git clone $qemu_git_url $qemu_folder
+            pushd $qemu_folder
+            ./configure && make -j $(nproc) && make install
+            ln -s /mnt/resource/qemu/x86_64-softmmu/qemu-system-x86_64 /bin/qemu-system-x86_64
+            cd ${HOMEDIR}
+        else
+            install_package qemu-system-x86
+        fi
     fi
     which qemu-system-x86_64
     if [ $? -ne 0 ]; then
@@ -70,7 +90,12 @@ Install_KVM_Dependencies()
         Update_Test_State $ICA_TESTFAILED
         exit 0
     fi
-    install_package aria2
+    if [[ $DISTRO == "redhat_8" ]]; then
+        aria2_rpm_url="http://rpmfind.net/linux/fedora/linux/releases/29/Everything/x86_64/os/Packages/a/aria2-1.34.0-2.fc29.x86_64.rpm"
+        rpm -ivh $aria2_rpm_url
+    else
+        install_package aria2
+    fi
 }
 
 Download_Image_Files()
